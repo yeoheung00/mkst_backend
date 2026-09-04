@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String    @id @default(cuid())
+  name              String?
+  image             String?
+  email             String?   @unique
+  role              String    @default("USER")
+  provider          String
+  providerAccountId String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  posts             Post[]
+  comments          Comment[]
+  likes             Like[]
+
+  @@unique([provider, providerAccountId])
+}
+
+model Category {
+  id    String  @id @default(cuid())
+  slug  String  @unique
+  name  String  @unique
+  posts Post[]
+}
+
+model Post {
+  id         String      @id @default(cuid())
+  slug       String      @unique
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title      String
+  summary    String
+  toc        Json
+  content    Json
+  images     PostImage[]
+  authorId   String
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments   Comment[]
+  likes      Like[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model PostImage {
+  id           String   @id @default(cuid())
+  postId       String
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url          String
+  width        Int
+  height       Int
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([postId, displayOrder])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorName String?
+  password   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
