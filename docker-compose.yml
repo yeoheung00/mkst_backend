@@ -3,6 +3,7 @@ services:
     image: pgvector/pgvector:0.8.6-pg18-trixie
     container_name: mkst_postgresql
     restart: always
+
     environment:
       POSTGRES_USER: "${DB_USER_ID}"
       POSTGRES_PASSWORD: "${DB_USER_PASSWORD}"
@@ -10,17 +11,44 @@ services:
       TZ: Asia/Seoul
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
-    ports:
-      - "${DB_HOST}:${DB_PORT}:5432"
+
     networks:
       - mkst-network
+
     volumes:
       - mkst_postgresql_data:/var/lib/postgresql
+
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER_ID} -d ${DB_NAME}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER_ID} -d ${DB_NAME}"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    build: .
+    container_name: mkst_backend
+    restart: always
+
+    environment:
+      NODE_ENV: "${NODE_ENV}"
+      PORT: "${PORT}"
+      ORIGIN: "${ORIGIN}"
+      JWT_SECRET: "${JWT_SECRET}"
+      DATABASE_URL: "postgresql://${DB_USER_ID}:${DB_USER_PASSWORD}@db:5432/${DB_NAME}?schema=public"
+
+    ports:
+      - "${PORT}:${PORT}"
+
+    networks:
+      - mkst-network
+
+    depends_on:
+      db:
+        condition: service_healthy
 
 networks:
   mkst-network:

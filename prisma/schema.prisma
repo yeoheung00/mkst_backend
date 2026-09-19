@@ -4,7 +4,7 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -39,8 +39,8 @@ model Category {
 model Post {
   id         String      @id @default(cuid())
   slug       String      @unique
-  categoryId String?
-  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   title      String
   summary    String
   toc        Json
@@ -52,6 +52,8 @@ model Post {
   likes      Like[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
+
+  @@index([categoryId])
 }
 
 model PostImage {
@@ -68,16 +70,26 @@ model PostImage {
 }
 
 model Comment {
-  id         String   @id @default(cuid())
-  content    String
-  postId     String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId   String?
-  author     User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorName String?
-  password   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  content   String   @db.VarChar(1000)
+
+  postId    String
+  authorId  String
+  parentId  String?
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([parentId])
+  @@index([authorId, createdAt])
 }
 
 model Like {

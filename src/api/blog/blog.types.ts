@@ -18,3 +18,13 @@ export type CreatePostInput = {
   categoryName: string;
   images: PostImage[];
 }
+
+export type CreateCommentInput = {
+  postId: string;
+  content: string;
+  parentId?: string | null;
+}
+
+export type EditCommentInput = {
+  content: string;
+}
