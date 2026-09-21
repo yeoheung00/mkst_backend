@@ -15,6 +15,7 @@ src/generated/prisma/
 
 # User uploads
 public/uploads/
+!public/uploads/.gitkeep
 
 # Logs
 npm-debug.log*
