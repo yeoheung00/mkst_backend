@@ -16,7 +16,7 @@ services:
       - mkst-network
 
     volumes:
-      - mkst_postgresql_data:/var/lib/postgresql
+      - mkst_postgresql_data:/var/lib/postgresql/data
 
     healthcheck:
       test:
@@ -48,6 +48,9 @@ services:
 
     networks:
       - mkst-network
+
+    volumes:
+      - ./public/uploads:/app/public/uploads
 
     depends_on:
       db:
