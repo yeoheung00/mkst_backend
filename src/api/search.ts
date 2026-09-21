@@ -7,7 +7,6 @@ const searchRouter = express.Router();
 searchRouter.get("/:searchTerm", searchController);
 
 async function searchController(req: Request, res: Response) {
-  console.log("search has called");
   const params = req.params.searchTerm as string;
   const searchTerm = params.trim();
   if (!searchTerm)
