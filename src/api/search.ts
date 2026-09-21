@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { ApiError } from "src/shared/middlewares/error";
+import prisma from "@shared/config/db-connection";
 
 const searchRouter = express.Router();
 
