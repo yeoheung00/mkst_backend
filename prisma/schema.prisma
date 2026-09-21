@@ -30,16 +30,16 @@ model User {
 }
 
 model Category {
-  id    String  @id @default(cuid())
+  id    Int  @id @default(autoincrement())
   slug  String  @unique
   name  String  @unique
   posts Post[]
 }
 
 model Post {
-  id         String      @id @default(cuid())
+  id         Int      @id @default(autoincrement())
   slug       String      @unique
-  categoryId String
+  categoryId Int
   category   Category   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   title      String
   summary    String
@@ -57,8 +57,8 @@ model Post {
 }
 
 model PostImage {
-  id           String   @id @default(cuid())
-  postId       String
+  id           Int   @id @default(autoincrement())
+  postId       Int
   post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   url          String
   width        Int
@@ -70,12 +70,12 @@ model PostImage {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        Int   @id @default(autoincrement())
   content   String   @db.VarChar(1000)
 
-  postId    String
+  postId    Int
   authorId  String
-  parentId  String?
+  parentId  Int?
 
   deletedAt DateTime?
 
@@ -93,8 +93,8 @@ model Comment {
 }
 
 model Like {
-  id        String   @id @default(cuid())
-  postId    String
+  id        Int   @id @default(autoincrement())
+  postId    Int
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,5 +1,5 @@
 import express from "express";
-import { createPost, getCategories, getPosts, getPostBySlug, getCategoryBySlug, getComments, createComment, editComment, deleteComment, editPost, deletePost } from "./blog.controller";
+import { createPost, getCategories, getPosts, getPostBySlug, getCategoryBySlug, getComments, createComment, editComment, deleteComment, editPost, deletePost, likePost } from "./blog.controller";
 import { requireAuth } from "@shared/middlewares/auth";
 import { authenticatedHandler } from "@shared/http/handler";
 
@@ -12,6 +12,7 @@ blogRouter.post("/posting", requireAuth, authenticatedHandler(createPost));
 blogRouter.patch("/posting/:id", requireAuth, authenticatedHandler(editPost));
 blogRouter.delete("/posting/:id", requireAuth, authenticatedHandler(deletePost));
 blogRouter.get("/post/:slug", getPostBySlug);
+blogRouter.post("/post/:id/like", requireAuth, authenticatedHandler(likePost));
 blogRouter.get("/comments/:postId", getComments);
 blogRouter.post("/comment", requireAuth, authenticatedHandler(createComment));
 blogRouter.patch("/comment/:id", requireAuth, authenticatedHandler(editComment));

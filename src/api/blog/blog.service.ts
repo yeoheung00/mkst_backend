@@ -84,11 +84,13 @@ export async function getPostBySlug(slug: string) {
           height: true,
         }
       },
+      likes: {
+        select: {
+          userId: true,
+        }
+      },
       createdAt: true,
       updatedAt: true,
-      _count: {
-        select: { likes: true },
-      },
     },
   });
 }
@@ -146,7 +148,7 @@ export async function createPost(post: CreatePostInput, authorId: string) {
 export async function editPost(
   post: CreatePostInput,
   authorId: string,
-  postId: string
+  postId: number
 ) {
   const postToUpdate = await prisma.post.findUnique({
     where: { id: postId },
@@ -303,7 +305,7 @@ export async function editPost(
   });
 }
 
-export async function deletePost(authorId: string, postId: string) {
+export async function deletePost(authorId: string, postId: number) {
   const post = await prisma.post.findUnique({
     where: {
       id: postId,
@@ -341,7 +343,7 @@ export async function deletePost(authorId: string, postId: string) {
   }
 }
 
-export async function getComments(postId: string) {
+export async function getComments(postId: number) {
   return await prisma.comment.findMany({
     where: {
       postId,
@@ -385,7 +387,7 @@ export async function createComment(comment: CreateCommentInput, authorId: strin
   });
 }
 
-export async function editComment(id: string, content: string, authorId: string) {
+export async function editComment(id: number, content: string, authorId: string) {
   const comment = await prisma.comment.findUnique({ where: { id } });
   if (!comment) throw new ApiError(404, "NOT_FOUND", "Comment not found");
   if (comment.authorId !== authorId) throw new ApiError(403, "FORBIDDEN", "You are not the author of this comment");
@@ -398,16 +400,16 @@ export async function editComment(id: string, content: string, authorId: string)
   });
 }
 
-export async function deleteComment(id: string, authorId: string) {
+export async function deleteComment(id: number, authorId: string) {
   const comment = await prisma.comment.findUnique({ where: { id } });
   if (!comment) throw new ApiError(404, "NOT_FOUND", "Comment not found");
   if (comment.authorId !== authorId) throw new ApiError(403, "FORBIDDEN", "You are not the author of this comment");
 
-  const deletedIds: string[] = [];
+  const deletedIds: number[] = [];
 
   const deleteDeletedParents = async (
     tx: Prisma.TransactionClient,
-    id: string,
+    id: number,
   ): Promise<void> => {
     const comment = await tx.comment.findUnique({
       where: {
@@ -490,4 +492,41 @@ export async function deleteComment(id: string, authorId: string) {
   });
 
   return deletedIds;
+}
+
+export async function likePost(postId: number, userId: string) {
+  const post = await prisma.post.findUnique({
+    where: {
+      id: postId,
+    },
+  });
+
+  if (!post) {
+    throw new ApiError(404, "NOT_FOUND", "포스트를 찾을 수 없습니다.");
+  }
+
+  const existingLike = await prisma.like.findUnique({
+    where: {
+      postId_userId: {
+        postId,
+        userId,
+      },
+    },
+  });
+
+  if (existingLike) {
+    await prisma.like.delete({
+      where: {
+        id: existingLike.id,
+      },
+    });
+    return;
+  }
+
+  await prisma.like.create({
+    data: {
+      postId,
+      userId,
+    },
+  });
 }

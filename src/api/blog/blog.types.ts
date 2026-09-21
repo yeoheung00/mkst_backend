@@ -20,9 +20,9 @@ export type CreatePostInput = {
 }
 
 export type CreateCommentInput = {
-  postId: string;
+  postId: number;
   content: string;
-  parentId?: string | null;
+  parentId?: number | null;
 }
 
 export type EditCommentInput = {

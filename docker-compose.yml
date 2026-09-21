@@ -34,11 +34,14 @@ services:
     restart: always
 
     environment:
-      NODE_ENV: "${NODE_ENV}"
-      PORT: "${PORT}"
-      ORIGIN: "${ORIGIN}"
-      JWT_SECRET: "${JWT_SECRET}"
-      DATABASE_URL: "postgresql://${DB_USER_ID}:${DB_USER_PASSWORD}@db:5432/${DB_NAME}?schema=public"
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      ORIGIN: ${ORIGIN}
+      DB_USER_ID: ${DB_USER_ID}
+      DB_USER_PASSWORD: ${DB_USER_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
 
     ports:
       - "${PORT}:${PORT}"

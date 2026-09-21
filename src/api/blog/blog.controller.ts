@@ -32,7 +32,7 @@ export async function createPost(req: AuthenticatedRequest, res: Response) {
 
 export async function editPost(req: AuthenticatedRequest, res: Response) {
   const authorId = req.user.id;
-  const postId = req.params.id as string;
+  const postId = parseInt(req.params.id as string);
   const post = req.body as CreatePostInput;
   const result = await Service.editPost(post, authorId, postId);
   return res.status(200).json(result);
@@ -40,7 +40,7 @@ export async function editPost(req: AuthenticatedRequest, res: Response) {
 
 export async function deletePost(req: AuthenticatedRequest, res: Response) {
   const authorId = req.user.id;
-  const postId = req.params.id as string;
+  const postId = parseInt(req.params.id as string);
   const goto = await Service.deletePost(authorId, postId);
   return res.status(200).json({ goto });
 }
@@ -53,7 +53,7 @@ export async function getPostBySlug(req: Request, res: Response) {
 }
 
 export async function getComments(req: Request, res: Response) {
-  const postId = req.params.postId as string;
+  const postId = parseInt(req.params.postId as string);
   const comments = await Service.getComments(postId);
   return res.status(200).json(comments);
 }
@@ -67,7 +67,7 @@ export async function createComment(req: AuthenticatedRequest, res: Response) {
 
 export async function editComment(req: AuthenticatedRequest, res: Response) {
   const authorId = req.user.id;
-  const id = req.params.id as string;
+  const id = parseInt(req.params.id as string);
   const comment = req.body as CreateCommentInput;
   await Service.editComment(id, comment.content, authorId);
   return res.status(204).send();
@@ -75,7 +75,14 @@ export async function editComment(req: AuthenticatedRequest, res: Response) {
 
 export async function deleteComment(req: AuthenticatedRequest, res: Response) {
   const authorId = req.user.id;
-  const id = req.params.id as string;
+  const id = parseInt(req.params.id as string);
   const result = await Service.deleteComment(id, authorId);
   return res.status(200).json({deletedIds: result});
+}
+
+export async function likePost(req: AuthenticatedRequest, res: Response) {
+  const userId = req.user.id;
+  const postId = parseInt(req.params.id as string);
+  await Service.likePost(postId, userId);
+  return res.status(204).send();
 }
