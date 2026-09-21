@@ -32,6 +32,3 @@ pnpm-debug.log*
 .agents/
 .claude/
 .windsurf/
-
-#dev
-docker-compose.dev.yml

@@ -12,6 +12,9 @@ services:
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
 
+    ports:
+      - "${DB_PORTS}"
+
     networks:
       - mkst-network
 
@@ -27,34 +30,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  backend:
-    build: .
-    container_name: mkst_backend
-    restart: always
-
-    environment:
-      NODE_ENV: "${NODE_ENV}"
-      PORT: "${PORT}"
-      ORIGIN: "${ORIGIN}"
-      DB_USER_ID: "${DB_USER_ID}"
-      DB_USER_PASSWORD: "${DB_USER_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-      DATABASE_URL: "postgresql://${DB_USER_ID}:${DB_USER_PASSWORD}@db:5432/${DB_NAME}?schema=public"
-      JWT_SECRET: "${JWT_SECRET}"
-
-    ports:
-      - "${PORT}:${PORT}"
-
-    networks:
-      - mkst-network
-
-    volumes:
-      - ./public/uploads:/app/public/uploads
-
-    depends_on:
-      db:
-        condition: service_healthy
 
 networks:
   mkst-network:
