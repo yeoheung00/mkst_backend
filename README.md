@@ -9,7 +9,7 @@
 * **Infrastructure & Deployment:** Ubuntu Server CLI (Self-hosted), Docker, Docker Compose
 
 ## 아키텍처 및 디렉터리 설계
-단순한 기능 분할을 넘어, 기능 추가 및 수정 시 부작용을 최소화하고 코드의 재사용성을 높이기 위해 **도메인 계층화**와 **횡단 관심시 격리**를 결합한 디렉터리 구조를 설계했습니다.
+단순한 기능 분할을 넘어, 기능 추가 및 수정 시 발생할 수 있는 코드 간섭을 줄이고 재사용성을 높이기 위해 **기능별 계층 분리**와 **공통 로직 격리**를 적용한 디렉터리 구조를 설계했습니다.
 
 ![Architecture](docs/architecture.png)
 
