@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { jwtVerify } from "jose";
+import prisma from "@shared/config/db-connection";
 
 const verifyToken = async (token: string): Promise<string | null> => {
   const rawSecret = process.env.JWT_SECRET;
@@ -123,4 +124,57 @@ const requireAuth = async (
   }
 };
 
-export { optionalAuth, requireAuth };
+const requireAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // 1. requireAuth 통과 여부 확인
+    if (!req.user || !req.user.id || !req.user.isSignedIn) {
+      return res.status(401).json({
+        success: false,
+        error: "UNAUTHORIZED",
+        message: "로그인이 필요합니다.",
+      });
+    }
+
+    // 2. DB에서 유저 권한 조회
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "NOT_FOUND",
+        message: "존재하지 않는 사용자입니다.",
+      });
+    }
+
+    if (user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        error: "FORBIDDEN",
+        message: "관리자 권한이 필요합니다.",
+      });
+    }
+
+    return next();
+  } catch (error) {
+    console.error(
+      "Admin 인가 실패:",
+      error instanceof Error ? error.message : error
+    );
+    return res.status(500).json({
+      success: false,
+      error: "INTERNAL_SERVER_ERROR",
+      message: "권한 확인 중 서버 오류가 발생했습니다.",
+    });
+  }
+};
+
+const adminOnly = [requireAuth, requireAdmin];
+
+export { optionalAuth, requireAuth, adminOnly };

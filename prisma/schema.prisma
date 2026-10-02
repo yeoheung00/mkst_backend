@@ -102,3 +102,29 @@ model Like {
 
   @@unique([postId, userId])
 }
+
+model Project {
+  id            Int       @id @default(autoincrement())
+  slug          String    @unique
+  title         String
+  summary       String
+  period        String
+  status        String    @default("Completed")
+  isFeatured    Boolean   @default(false)
+  order         Int       @default(0)
+
+  devStack      String[]
+  visualStack   String[]
+
+  demoUrl       String?
+  githubUrl     String
+
+  readmeContent String?    @db.Text
+  syncedAt      DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([order(sort: Asc)])
+  @@index([isFeatured])
+}
