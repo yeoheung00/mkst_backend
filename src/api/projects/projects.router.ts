@@ -10,6 +10,6 @@ projectsRouter.get("/:slug", getProject);
 projectsRouter.post("/", adminOnly, authenticatedHandler(createProject));
 projectsRouter.patch("/:id", adminOnly, authenticatedHandler(editProject));
 projectsRouter.delete("/:id", adminOnly, authenticatedHandler(deleteProject));
-projectsRouter.get("/:id/sync", adminOnly, authenticatedHandler(syncProject));
+projectsRouter.patch("/:id/sync", adminOnly, authenticatedHandler(syncProject));
 
 export default projectsRouter;

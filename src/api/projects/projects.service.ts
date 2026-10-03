@@ -2,7 +2,6 @@ import prisma from "@shared/config/db-connection";
 import { CreateProjectInput } from "./projects.types";
 import { ApiError } from "@shared/middlewares/error";
 import { fetchRawReadme, parseGithubUrl } from "./projects.utils";
-import { StdioNull } from "child_process";
 
 export async function getAllProjects() {
     return await prisma.project.findMany({

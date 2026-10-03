@@ -17,7 +17,6 @@ export async function getProject(req: Request, res: Response) {
 }
 
 export async function createProject(req: AuthenticatedRequest, res: Response) {
-    console.log("createProject called with body:", req.body);
     if (!req.body) return res.status(400).json({ error: "요청 본문이 필요합니다." });
     const project = req.body as CreateProjectInput;
     const result = await Service.createProject(project);
@@ -39,6 +38,7 @@ export async function deleteProject(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function syncProject(req: AuthenticatedRequest, res: Response) {
+    console.log("syncProject called");
     const id = parseInt(req.params.id as string);
     const result = await Service.syncProject(id);
     return res.status(200).json(result);
