@@ -1,13 +1,18 @@
 import type { Request } from "express";
+import { JWTPayload } from "node_modules/jose/dist/types";
+
+export interface UserTokenPayload extends JWTPayload {
+  userId: string;
+  role: string;
+}
 
 export type AnonymousUser = {
   id: null;
-  isSignedIn: false;
 };
 
 export type AuthenticatedUser = {
-  id: string;
-  isSignedIn: true;
+  userId: string;
+  role: string;
 };
 
 export type RequestUser = AnonymousUser | AuthenticatedUser;

@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 import {initUploadPath, uploadDir} from "@shared/config/upload-path";
 import apiRouter from "./api";
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -23,6 +24,8 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
+
 app.use('/uploads', express.static(uploadDir));
 app.use('/api', apiRouter);
 
