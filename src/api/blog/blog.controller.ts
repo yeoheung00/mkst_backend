@@ -23,7 +23,7 @@ export async function getPosts(req: Request, res: Response) {
 }
 
 export async function createPost(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   if (!req.body) return res.status(400).json({ error: "요청 본문이 필요합니다." });
   const post = req.body as CreatePostInput;
   const result = await Service.createPost(post, authorId);
@@ -31,7 +31,7 @@ export async function createPost(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function editPost(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   const postId = parseInt(req.params.id as string);
   const post = req.body as CreatePostInput;
   const result = await Service.editPost(post, authorId, postId);
@@ -39,7 +39,7 @@ export async function editPost(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function deletePost(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   const postId = parseInt(req.params.id as string);
   const goto = await Service.deletePost(authorId, postId);
   return res.status(200).json({ goto });
@@ -59,14 +59,14 @@ export async function getComments(req: Request, res: Response) {
 }
 
 export async function createComment(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   const comment = req.body as CreateCommentInput;
   const result = await Service.createComment(comment, authorId);
   return res.status(201).json(result);
 }
 
 export async function editComment(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   const id = parseInt(req.params.id as string);
   const comment = req.body as CreateCommentInput;
   await Service.editComment(id, comment.content, authorId);
@@ -74,14 +74,14 @@ export async function editComment(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function deleteComment(req: AuthenticatedRequest, res: Response) {
-  const authorId = req.user.id;
+  const authorId = req.user.userId;
   const id = parseInt(req.params.id as string);
   const result = await Service.deleteComment(id, authorId);
   return res.status(200).json({deletedIds: result});
 }
 
 export async function likePost(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user.id;
+  const userId = req.user.userId;
   const postId = parseInt(req.params.id as string);
   await Service.likePost(postId, userId);
   return res.status(204).send();

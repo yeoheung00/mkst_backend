@@ -25,8 +25,22 @@ model User {
   posts             Post[]
   comments          Comment[]
   likes             Like[]
+  refreshTokens     RefreshToken[]
 
   @@unique([provider, providerAccountId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Category {

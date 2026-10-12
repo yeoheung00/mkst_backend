@@ -1,7 +1,7 @@
 import prisma from "@shared/config/db-connection";
 import { CreatePostInput, CreateCommentInput } from "./blog.types";
 import { Prisma } from "@generated/prisma/client";
-import extractToc from "./utils/toc.util";
+import extractToc, { processContentWithToc } from "./utils/toc.util";
 import { toSlug } from "./utils";
 import { ApiError } from "@shared/middlewares/error";
 
@@ -101,18 +101,19 @@ export async function createPost(post: CreatePostInput, authorId: string) {
   if (user.role !== "ADMIN") throw new ApiError(403, "FORBIDDEN", "You do not have permission to create a post");
 
   const { categoryName, content, images, ...input } = post;
-  const toc = extractToc(content);
+  
+  // TOC 및 ID가 주입된 본문 추출
+  const { content: processedContent, toc } = processContentWithToc(content);
   const randomUUID = crypto.randomUUID().slice(0, 4);
   const slug = toSlug(input.title);
+
   return await prisma.post.create({
     data: {
       ...input,
       slug: `${slug}-${randomUUID}`,
       toc: toc as unknown as Prisma.InputJsonValue,
-      content: content as unknown as Prisma.InputJsonValue,
-      author: {
-        connect: { id: authorId },
-      },
+      content: processedContent as unknown as Prisma.InputJsonValue,
+      author: { connect: { id: authorId } },
       category: {
         connectOrCreate: {
           where: { name: categoryName },
@@ -136,11 +137,7 @@ export async function createPost(post: CreatePostInput, authorId: string) {
     },
     select: {
       slug: true,
-      category: {
-        select: {
-          slug: true,
-        },
-      }
+      category: { select: { slug: true } }
     }
   });
 }
@@ -153,63 +150,32 @@ export async function editPost(
   const postToUpdate = await prisma.post.findUnique({
     where: { id: postId },
     select: {
-      author: {
-        select: {
-          id: true,
-        },
-      },
-      images: {
-        select: {
-          url: true,
-        },
-      },
-      category: {
-        select: {
-          id: true,
-        },
-      },
+      author: { select: { id: true } },
+      images: { select: { url: true } },
+      category: { select: { id: true, name: true } }, // name 추가 권장
     },
   });
 
-  if (!postToUpdate) {
-    throw new ApiError(404, 'NOT_FOUND', 'Post not found');
-  }
-
+  if (!postToUpdate) throw new ApiError(404, 'NOT_FOUND', 'Post not found');
   if (postToUpdate.author.id !== authorId) {
-    throw new ApiError(
-      403,
-      'FORBIDDEN',
-      'You are not authorized to edit this post'
-    );
+    throw new ApiError(403, 'FORBIDDEN', 'You are not authorized to edit this post');
   }
 
   const { categoryName, content, images, ...input } = post;
 
-  const toc = extractToc(content);
-  const randomUUID = crypto.randomUUID().slice(0, 4);
-  const slug = toSlug(input.title);
+  // [수정 1] createPost와 동일하게 processContentWithToc 사용 (TOC & ID 주입 일관성)
+  const { content: processedContent, toc } = processContentWithToc(content);
 
-  // 기존 DB 이미지
-  const existingImageUrls = new Set(
-    postToUpdate.images.map((image) => image.url)
-  );
+  const existingImageUrls = new Set(postToUpdate.images.map((img) => img.url));
+  const newImageUrls = new Set(images.map((img) => img.url));
 
-  // 수정된 게시글에 포함된 이미지
-  const newImageUrls = new Set(
-    images.map((image) => image.url)
-  );
+  const imagesToDelete = postToUpdate.images.filter((img) => !newImageUrls.has(img.url));
+  const imagesToCreate = images.filter((img) => !existingImageUrls.has(img.url));
+  
+  // [수정 4를 위한 세팅] 기존에 있었고, 여전히 남아있는 이미지만 업데이트 대상
+  const imagesToUpdate = images.filter((img) => existingImageUrls.has(img.url));
 
-  // DB에는 있지만 수정된 게시글에는 없는 이미지
-  const imagesToDelete = postToUpdate.images.filter(
-    (image) => !newImageUrls.has(image.url)
-  );
-
-  // 수정된 게시글에는 있지만 DB에는 없는 이미지
-  const imagesToCreate = images.filter(
-    (image) => !existingImageUrls.has(image.url)
-  );
-
-  const categoryId = postToUpdate.category.id;
+  const oldCategoryId = postToUpdate.category.id;
 
   return await prisma.$transaction(async (tx) => {
     // 1. Post 수정
@@ -217,14 +183,10 @@ export async function editPost(
       where: { id: postId },
       data: {
         ...input,
-        slug: `${slug}-${randomUUID}`,
+        // [수정 3] slug 업데이트 제거 - 기존 URL 보존 (SEO 최적화)
         toc: toc as unknown as Prisma.InputJsonValue,
-        content: content as unknown as Prisma.InputJsonValue,
-
-        author: {
-          connect: { id: authorId },
-        },
-
+        content: processedContent as unknown as Prisma.InputJsonValue,
+        // 카테고리 업데이트 (이름이 변경되었을 경우 새로운 곳에 연결)
         category: {
           connectOrCreate: {
             where: { name: categoryName },
@@ -237,27 +199,21 @@ export async function editPost(
       },
       select: {
         slug: true,
-        category: {
-          select: {
-            slug: true,
-          },
-        },
+        category: { select: { slug: true } },
       },
     });
 
-    // 2. 삭제된 이미지의 PostImage 삭제
+    // 2. 삭제된 이미지 삭제
     if (imagesToDelete.length > 0) {
       await tx.postImage.deleteMany({
         where: {
           postId,
-          url: {
-            in: imagesToDelete.map((image) => image.url),
-          },
+          url: { in: imagesToDelete.map((img) => img.url) },
         },
       });
     }
 
-    // 3. 새로 추가된 이미지의 PostImage 생성
+    // 3. 새로 추가된 이미지 생성
     if (imagesToCreate.length > 0) {
       await tx.postImage.createMany({
         data: imagesToCreate.map((image) => ({
@@ -265,41 +221,37 @@ export async function editPost(
           url: image.url,
           width: image.width,
           height: image.height,
-          displayOrder: images.findIndex(
-            (item) => item.url === image.url
-          ),
+          displayOrder: images.findIndex((item) => item.url === image.url), // 전체 배열 기준 인덱스
         })),
       });
-
-      const category = await tx.category.findUnique({
-        where: { id: categoryId },
-        select: {
-          posts: true,
-        },
-      });
-      if (category && category.posts.length === 0) {
-        await tx.category.delete({
-          where: { id: categoryId },
-        });
-      }
     }
 
-    // 4. 기존 이미지들의 displayOrder도 갱신
-    await Promise.all(
-      images.map((image, index) =>
-        tx.postImage.updateMany({
-          where: {
-            postId,
-            url: image.url,
-          },
-          data: {
-            displayOrder: index,
-            width: image.width,
-            height: image.height,
-          },
-        })
-      )
-    );
+    // 4. 기존 유지된 이미지들의 메타데이터(순서, 크기) 갱신 [수정 4 반영]
+    if (imagesToUpdate.length > 0) {
+      await Promise.all(
+        imagesToUpdate.map((image) =>
+          tx.postImage.updateMany({
+            where: { postId, url: image.url },
+            data: {
+              displayOrder: images.findIndex((item) => item.url === image.url),
+              width: image.width,
+              height: image.height,
+            },
+          })
+        )
+      );
+    }
+
+    // 5. [수정 2] 빈 카테고리 정리 (이미지 블록 밖으로 분리)
+    // 현재 포스트가 다른 카테고리로 이동했다면, 구 카테고리에 남은 글이 있는지 확인
+    const oldCategoryCount = await tx.category.findUnique({
+      where: { id: oldCategoryId },
+      include: { _count: { select: { posts: true } } },
+    });
+
+    if (oldCategoryCount && oldCategoryCount._count.posts === 0) {
+      await tx.category.delete({ where: { id: oldCategoryId } });
+    }
 
     return updatedPost;
   });
