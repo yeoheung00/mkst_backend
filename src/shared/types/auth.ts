@@ -7,7 +7,7 @@ export interface UserTokenPayload extends JWTPayload {
 }
 
 export type AnonymousUser = {
-  id: null;
+  userId: null;
 };
 
 export type AuthenticatedUser = {

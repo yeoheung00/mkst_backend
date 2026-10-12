@@ -1,7 +1,7 @@
 import prisma from "@shared/config/db-connection";
 import { CreatePostInput, CreateCommentInput } from "./blog.types";
 import { Prisma } from "@generated/prisma/client";
-import extractToc from "./utils/toc.util";
+import extractToc, { processContentWithToc } from "./utils/toc.util";
 import { toSlug } from "./utils";
 import { ApiError } from "@shared/middlewares/error";
 
@@ -101,7 +101,7 @@ export async function createPost(post: CreatePostInput, authorId: string) {
   if (user.role !== "ADMIN") throw new ApiError(403, "FORBIDDEN", "You do not have permission to create a post");
 
   const { categoryName, content, images, ...input } = post;
-  const toc = extractToc(content);
+  const { content: processedContent, toc } = processContentWithToc(content);
   const randomUUID = crypto.randomUUID().slice(0, 4);
   const slug = toSlug(input.title);
   return await prisma.post.create({
@@ -109,7 +109,7 @@ export async function createPost(post: CreatePostInput, authorId: string) {
       ...input,
       slug: `${slug}-${randomUUID}`,
       toc: toc as unknown as Prisma.InputJsonValue,
-      content: content as unknown as Prisma.InputJsonValue,
+      content: processedContent as unknown as Prisma.InputJsonValue,
       author: {
         connect: { id: authorId },
       },

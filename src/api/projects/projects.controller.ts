@@ -24,6 +24,7 @@ export async function createProject(req: AuthenticatedRequest, res: Response) {
 }
 
 export async function editProject(req: AuthenticatedRequest, res: Response) {
+  console.log("edit project")
     const id = parseInt(req.params.id as string);
     if (!req.body) return res.status(400).json({ error: "요청 본문이 필요합니다." });
     const project = req.body as CreateProjectInput;
